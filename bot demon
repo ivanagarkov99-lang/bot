@@ -1,50 +1,58 @@
+import os
+import random
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
-import random
 
-# пользователи с включенным режимом вопросов
+TOKEN = os.getenv("TOKEN")
+
+# список пользователей с режимом вопросов
 questions_enabled = set()
 
 # /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        'Привет, я бот созданный для Чата чернилок, что бы узнать мои команды напиши "/help" что бы узнать что я умею, Разработчик бота: @Komarix_Original'
+        "Привет, я бот созданный для Чата чернилок.\n"
+        "Чтобы узнать мои команды напиши /help\n"
+        "Разработчик бота: @Komarix_Original"
     )
 
 # /help
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Доступные списки команд:\n"
-        "1. Кинуть кубик (бета) - ты бросаешь кубик на разное количество метров\n"
-        "2. Включить вопросы - Могу ответить на ваш любой вопрос, но могу отвечать только Да или Нет (написав Выключить вопрос я перестаю отвечать)"
+        "1. Кинуть кубик (бета) — ты бросаешь кубик на разное количество метров\n"
+        "2. Включить вопросы — отвечаю только Да или Нет\n"
+        "Напиши 'Выключить вопросы' чтобы отключить"
     )
 
 # обработка сообщений
-async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.lower()
-    user_obj = update.message.from_user
+    user = update.message.from_user
 
-    # @username или имя
-    user = f"@{user_obj.username}" if user_obj.username else user_obj.first_name
+    username = user.username if user.username else user.first_name
 
-    # 🎲 Кинуть кубик
+    # кинуть кубик
     if "кинуть кубик" in text:
-        distance = random.randint(1, 100)
-        await update.message.reply_text(f"{user} кинул кубик на {distance} метров 🎲")
+        meters = random.randint(1, 100)
+        await update.message.reply_text(f"{username} кинул кубик на {meters} метров")
+        return
 
-    # 🧠 Включить вопросы
-    elif "включить вопросы" in text:
-        questions_enabled.add(user_obj.id)
-        await update.message.reply_text("Режим вопросов включен ✅")
+    # включить вопросы
+    if "включить вопросы" in text:
+        questions_enabled.add(user.id)
+        await update.message.reply_text("Режим вопросов включен")
+        return
 
-    # ❌ Выключить вопросы
-    elif "выключить вопрос" in text:
-        questions_enabled.discard(user_obj.id)
-        await update.message.reply_text("Режим вопросов выключен ❌")
+    # выключить вопросы
+    if "выключить вопросы" in text:
+        questions_enabled.discard(user.id)
+        await update.message.reply_text("Режим вопросов выключен")
+        return
 
-    # ❓ Да / Нет
-    elif user_obj.id in questions_enabled:
-        answer = random.choice(["Да ✅", "Нет ❌"])
+    # режим да/нет
+    if user.id in questions_enabled:
+        answer = random.choice(["Да", "Нет"])
         await update.message.reply_text(answer)
 
 # запуск
@@ -52,8 +60,7 @@ app = ApplicationBuilder().token(TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("help", help_command))
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, reply))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
 print("Бот запущен...")
-
 app.run_polling()
