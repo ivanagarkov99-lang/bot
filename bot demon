@@ -2,8 +2,6 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 import random
 
-TOKEN = "8737358022:AAH-78pW9z-M91gF2Pq1mPOL6i-9VZwyV9s"
-
 # пользователи с включенным режимом вопросов
 questions_enabled = set()
 
